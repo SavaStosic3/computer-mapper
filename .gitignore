@@ -1,0 +1,16 @@
+# Your scan data: a complete map of your PC. Never commit or share these.
+data/
+reports/
+
+# Your personal settings (created on the first scan from the defaults in mapper/common.py)
+config.json
+
+# Local tooling
+.claude/
+.vscode/
+.idea/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.partial

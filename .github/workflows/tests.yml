@@ -1,0 +1,37 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile
+        run: python -m compileall -q mapper tests
+      - name: Unit tests
+        run: python -m unittest discover -s tests -t . -v
+      - name: Scan a small folder end to end
+        shell: pwsh
+        run: |
+          $env:MAPPER_DATA_DIR = "$env:RUNNER_TEMP\cm-data"
+          $env:MAPPER_REPORT_DIR = "$env:RUNNER_TEMP\cm-reports"
+          python -m mapper scan --roots "$env:GITHUB_WORKSPACE\mapper" --no-open
+          if ($LASTEXITCODE) { throw "first scan failed" }
+          Start-Sleep -Seconds 2   # snapshot names are timestamped to the second
+          python -m mapper scan --roots "$env:GITHUB_WORKSPACE\mapper" --no-open
+          if ($LASTEXITCODE) { throw "second scan failed" }
+          python -m mapper list
+          if (-not (Test-Path "$env:RUNNER_TEMP\cm-reports\latest.html")) { throw "no report" }

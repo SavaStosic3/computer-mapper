@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Computer Map</title>
+<style>
+:root{--bg:#f6f6f3;--panel:#fff;--ink:#1c1c1e;--muted:#6a6a70;--line:#e3e3de;--accent:#2d6cdf;--hover:#f1f4fb;
+--add:#1d8048;--rem:#c0392b;--mod:#a86a0c;--bar:#d3def4;--bar2:#f1d4cf;--chip:#efefea;--code:#f2f2ee;--sel:#e6edfb}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#141416;--panel:#1d1d20;--ink:#ececef;--muted:#9b9ba3;
+--line:#2f2f34;--accent:#7aa6ff;--hover:#24262c;--add:#52c58c;--rem:#ff7b6e;--mod:#e9b14d;--bar:#2b3c5c;--bar2:#5a2f2a;
+--chip:#2a2a2e;--code:#232327;--sel:#22314d}}
+:root[data-theme=dark]{--bg:#141416;--panel:#1d1d20;--ink:#ececef;--muted:#9b9ba3;--line:#2f2f34;--accent:#7aa6ff;--hover:#24262c;
+--add:#52c58c;--rem:#ff7b6e;--mod:#e9b14d;--bar:#2b3c5c;--bar2:#5a2f2a;--chip:#2a2a2e;--code:#232327;--sel:#22314d}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+header.top{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:center;padding:8px 16px;flex-wrap:wrap}
+.brand{font-weight:700;font-size:15px;white-space:nowrap}.brand span{color:var(--muted);font-weight:500;margin-left:6px}
+nav{display:flex;gap:2px;flex-wrap:wrap}
+nav a{padding:5px 10px;border-radius:6px;color:var(--muted);font-weight:550}
+nav a:hover{background:var(--hover);text-decoration:none}nav a.on{background:var(--sel);color:var(--ink)}
+.tools{margin-left:auto;display:flex;gap:8px;align-items:center}
+input,select,button{font:inherit;color:inherit}
+input[type=search],input[type=text],select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 9px}
+input[type=search]{width:260px}
+button{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer}
+button:hover{background:var(--hover)}
+main{max-width:1240px;margin:0 auto;padding:18px 16px 80px}
+h1{font-size:22px;margin:4px 0 2px;font-weight:650;word-break:break-all}
+h2{font-size:16px;margin:26px 0 8px;font-weight:650}
+.sub{color:var(--muted)}
+.crumbs{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.crumbs a{color:var(--muted)}.crumbs a:hover{color:var(--accent)}
+.stats{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+.chip{background:var(--chip);border-radius:999px;padding:2px 10px;font-size:12.5px;color:var(--muted)}
+.chip b{color:var(--ink);font-weight:600}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(210px,40%),1fr));gap:10px;margin-top:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:block;color:inherit}
+a.card:hover{border-color:var(--accent);text-decoration:none}
+.card .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.card .v{font-size:21px;font-weight:650;margin-top:2px;font-variant-numeric:tabular-nums}
+.card .d{font-size:12.5px;color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:5px 12px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--hover)}
+th{font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;position:sticky;top:0;background:var(--panel)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.p{word-break:break-all;font-family:"Cascadia Mono",Consolas,monospace;font-size:12px}
+.dim{color:var(--muted)}
+.pos{color:var(--add)}.neg{color:var(--rem)}
+.b{display:inline-block;font-size:10.5px;font-weight:650;border-radius:4px;padding:0 5px;text-transform:uppercase;letter-spacing:.03em;margin-left:6px;vertical-align:1px}
+.b.added,.b.new{background:color-mix(in srgb,var(--add) 16%,transparent);color:var(--add)}
+.b.removed{background:color-mix(in srgb,var(--rem) 16%,transparent);color:var(--rem)}
+.b.modified,.b.changed,.b.updated{background:color-mix(in srgb,var(--mod) 18%,transparent);color:var(--mod)}
+.b.tag{background:var(--chip);color:var(--muted)}
+.bar{height:6px;border-radius:3px;background:var(--bar);min-width:1px}
+.barcell{width:150px}
+.ico{display:inline-block;width:16px;height:16px;vertical-align:-3px;margin-right:6px;color:var(--muted)}
+.ico.f{color:#d9a43b}
+.name a{color:var(--ink)}.name a:hover{color:var(--accent)}
+.act{visibility:hidden;font-size:12px;padding:1px 7px}
+tr:hover .act{visibility:visible}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
+.filters label{display:flex;gap:5px;align-items:center;color:var(--muted)}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.pills a{padding:4px 12px;border-radius:999px;background:var(--chip);color:var(--muted);font-weight:550}
+.pills a.on{background:var(--sel);color:var(--ink)}
+.pills a:hover{text-decoration:none;color:var(--ink)}
+.empty{color:var(--muted);padding:14px}
+.note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:10px 14px;margin:12px 0;color:var(--muted)}
+.err{border-left-color:var(--rem)}
+.pager{display:flex;gap:10px;align-items:center;margin:10px 0;color:var(--muted)}
+details{margin:12px 0}summary{cursor:pointer;color:var(--accent);font-weight:550}
+.hl{background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.small{font-size:12px}
+/* category groups: validated categorical slots 1-6 (+ neutral), stepped separately for dark */
+:root{--g-system:#2a78d6;--g-software:#eb6834;--g-gaming:#1baf7a;--g-files:#eda100;--g-bloat:#e87ba4;--g-junk:#008300;--g-other:#898781;--crit:#d03b3b}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--g-system:#3987e5;--g-software:#d95926;--g-gaming:#199e70;--g-files:#c98500;--g-bloat:#d55181}}
+:root[data-theme=dark]{--g-system:#3987e5;--g-software:#d95926;--g-gaming:#199e70;--g-files:#c98500;--g-bloat:#d55181}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);white-space:nowrap}
+.tag i{width:8px;height:8px;border-radius:2px;flex:none;display:inline-block}
+a.tag:hover{color:var(--ink);text-decoration:none}
+.seg{display:flex;gap:2px;height:16px;margin:12px 0 8px}
+.seg a{display:block;height:100%;min-width:3px}
+.seg a:first-child{border-radius:4px 0 0 4px}.seg a:last-child{border-radius:0 4px 4px 0}
+.seg a:hover{filter:brightness(1.12)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0 0 6px}
+.legend .tag b{color:var(--ink);font-weight:600}
+tr.grp td{background:var(--bg);font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.b.high{background:color-mix(in srgb,var(--ink) 13%,transparent);color:var(--ink)}
+.b.medium{background:var(--chip);color:var(--ink)}
+.b.low{background:var(--chip);color:var(--muted)}
+.why{color:var(--muted);font-size:12.5px;margin-top:2px}
+a.p{font-family:"Cascadia Mono",Consolas,monospace;font-size:12px}
+.cmd{display:flex;gap:6px;align-items:flex-start;margin-top:5px}
+.cmd code{flex:1;min-width:0;background:var(--code);border-radius:5px;padding:3px 7px;font:11.5px "Cascadia Mono",Consolas,monospace;word-break:break-all;white-space:pre-wrap}
+.btns{display:flex;flex-direction:column;gap:4px;align-items:stretch;white-space:nowrap}
+.btns button{font-size:12px;padding:2px 8px}
+tr.kept{opacity:.55}
+tr.sug td{vertical-align:top;padding-top:9px;padding-bottom:9px}
+.crit{display:inline-flex;align-items:center;gap:5px;font-weight:600}
+.crit svg{color:var(--crit)}
+#tip{position:fixed;z-index:30;pointer-events:none;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;
+  padding:5px 9px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;max-width:320px}
+@media (max-width:760px){input[type=search]{width:100%}.tools{width:100%;margin-left:0}.barcell{width:60px}.hide-sm{display:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">Computer Map<span id="computer"></span></div>
+  <nav id="tabs">
+    <a data-tab="map" href="#/map">Map</a>
+    <a data-tab="categories" href="#/categories">Categories</a>
+    <a data-tab="cleanup" href="#/cleanup">Cleanup</a>
+    <a data-tab="changes" href="#/changes">Changes</a>
+    <a data-tab="programs" href="#/programs">Programs</a>
+    <a data-tab="big" href="#/big">Largest files</a>
+    <a data-tab="types" href="#/types">File types</a>
+    <a data-tab="reports" href="#/reports">Reports</a>
+  </nav>
+  <div class="tools">
+    <input id="search" type="search" placeholder="Search file &amp; folder names" aria-label="Search">
+    <select id="snap" aria-label="Snapshot"></select>
+  </div>
+</header>
+<main id="view"><div class="empty">Loading…</div></main>
+<div id="tip" role="tooltip"></div>
+<script>
+"use strict";
+const TOKEN = "__TOKEN__";
+const S = { snap: null, snaps: [], ov: null };
+const view = document.getElementById("view");
+const ICON = {
+  folder: '<svg class="ico f" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 3A1.5 1.5 0 0 1 3 1.5h3.2l1.6 1.6H13A1.5 1.5 0 0 1 14.5 4.6V12A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12z"/></svg>',
+  file: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 1.5h5.5L13 5v9.5H4z"/><path d="M9.5 1.5V5H13"/></svg>',
+  link: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6.5 9.5l3-3M7 4.5l1-1a2.5 2.5 0 0 1 3.5 3.5l-1 1M9 11.5l-1 1A2.5 2.5 0 0 1 4.5 9l1-1"/></svg>',
+  lock: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3.5" y="7" width="9" height="7" rx="1"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>',
+  drive: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="4" width="13" height="8" rx="1.5"/><circle cx="11.5" cy="8" r=".9" fill="currentColor"/></svg>',
+};
+
+// ------------------------------------------------------------------ helpers
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function size(n) {
+  if (n === null || n === undefined) return "-";
+  let v = Math.abs(n), u = ["B","KB","MB","GB","TB"], i = 0;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return (n < 0 ? "-" : "") + (i === 0 ? v.toFixed(0) : v.toFixed(1)) + " " + u[i];
+}
+const signed = n => n ? (n > 0 ? "+" : "") + size(n) : "0 B";
+const num = n => (n ?? 0).toLocaleString();
+const signedNum = n => n ? (n > 0 ? "+" : "") + n.toLocaleString() : "0";
+function delta(n, fmt = signed) {
+  if (n === null || n === undefined || n === 0) return "";
+  return `<span class="${n > 0 ? "pos" : "neg"}">${esc(fmt(n))}</span>`;
+}
+function when(ts) {
+  if (!ts) return "-";
+  const d = new Date(ts * 1000);
+  return d.toLocaleDateString(undefined, {year: "numeric", month: "short", day: "numeric"}) + " " +
+         d.toLocaleTimeString(undefined, {hour: "2-digit", minute: "2-digit"});
+}
+const whenIso = s => s ? new Date(s).toLocaleString(undefined, {dateStyle: "medium", timeStyle: "short"}) : "-";
+const join = (dir, name) => dir.endsWith("\\") ? dir + name : dir + "\\" + name;
+const bar = (frac, neg) => `<div class="bar" style="width:${Math.max(0, Math.min(1, frac || 0)) * 100}%${neg ? ";background:var(--bar2)" : ""}"></div>`;
+const badge = (k, label) => `<span class="b ${esc(k)}">${esc(label || k)}</span>`;
+const pathCell = (dir, name) => name === undefined ? `<td class="p">${esc(dir)}</td>` :
+  `<td class="p"><span class="dim">${esc(dir.endsWith("\\") ? dir : dir + "\\")}</span>${esc(name)}</td>`;
+function table(headers, rows, empty = "Nothing here.") {
+  if (!rows.length) return `<div class="box"><div class="empty">${esc(empty)}</div></div>`;
+  const head = headers.map(h => h.startsWith("#") ? `<th class="n">${esc(h.slice(1))}</th>` :
+    h.startsWith("~") ? `<th class="hide-sm">${esc(h.slice(1))}</th>` : `<th>${esc(h)}</th>`).join("");
+  return `<div class="box"><table><thead><tr>${head}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
+}
+async function api(path, params = {}) {
+  const u = new URL(path, location.origin);
+  if (!("snap" in params)) params.snap = S.snap;
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null && v !== "") u.searchParams.set(k, v);
+  const r = await fetch(u);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+async function reveal(path) {
+  try { await post("/api/reveal", {path}); } catch (e) { alert(e.message || "Could not open Explorer."); }
+}
+document.addEventListener("click", ev => {
+  const b = ev.target.closest("[data-reveal]");
+  if (b) { ev.preventDefault(); reveal(b.dataset.reveal); }
+});
+const revealBtn = p => `<button class="act" data-reveal="${esc(p)}" title="Show in File Explorer">Explorer</button>`;
+const folderLink = (id, text) => `<a href="#/map/${id}">${esc(text)}</a>`;
+function setHash(tab, arg, params) {
+  const q = params ? "?" + new URLSearchParams(Object.entries(params).filter(([, v]) => v !== "" && v !== null && v !== undefined)).toString() : "";
+  const h = "#/" + tab + (arg ? "/" + encodeURIComponent(arg) : "") + (q.length > 1 ? q : "");
+  if (location.hash !== h) location.hash = h; else route();
+}
+const isCloud = a => (a & 0x400000) || (a & 0x40000) || (a & 0x1000);
+
+// ------------------------------------------------------------------ categories & actions
+function tagChip(cat) {
+  if (!cat || !S.tagMap) return "";
+  const t = S.tagMap[cat] || {label: cat, group: "other", desc: ""};
+  return `<a class="tag" href="#/categories/${esc(cat)}" data-tip="${esc(t.desc)}"><i style="background:var(--g-${esc(t.group)})"></i>${esc(t.label)}</a>`;
+}
+async function post(path, body) {
+  const r = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json", "X-Token": TOKEN},
+                               body: JSON.stringify(body)});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+// One segmented bar for the whole disk, split by category group; the legend names every part.
+function groupBar(byCat) {
+  const totals = {};
+  let all = 0;
+  for (const r of byCat) { const g = (S.tagMap[r.cat] || {group: "other"}).group; totals[g] = (totals[g] || 0) + (r.size || 0); all += r.size || 0; }
+  if (!all) return "";
+  const groups = S.ov.groups.filter(g => totals[g[0]]);
+  const pct = v => (v / all * 100).toFixed(v / all < 0.01 ? 1 : 0) + "%";
+  const segs = groups.map(([g, label]) => `<a href="#/categories" style="flex:${totals[g] / all};background:var(--g-${g})"
+      data-tip="${esc(label)}: ${size(totals[g])} (${pct(totals[g])})" aria-label="${esc(label)} ${size(totals[g])}"></a>`).join("");
+  const legend = groups.map(([g, label]) => `<span class="tag"><i style="background:var(--g-${g})"></i>${esc(label)} <b>${size(totals[g])}</b></span>`).join("");
+  return `<div class="seg" role="img" aria-label="Disk space by category group">${segs}</div><div class="legend">${legend}</div>`;
+}
+const tip = document.getElementById("tip");
+document.addEventListener("mouseover", ev => {
+  const t = ev.target.closest("[data-tip]");
+  if (t && t.dataset.tip) { tip.textContent = t.dataset.tip; tip.style.display = "block"; } else tip.style.display = "none";
+});
+document.addEventListener("mousemove", ev => {
+  if (tip.style.display !== "block") return;
+  tip.style.left = Math.max(8, Math.min(ev.clientX + 14, innerWidth - tip.offsetWidth - 8)) + "px";
+  tip.style.top = Math.min(ev.clientY + 18, innerHeight - tip.offsetHeight - 8) + "px";
+});
+document.addEventListener("click", async ev => {
+  const b = ev.target.closest("[data-open]");
+  if (!b) return;
+  ev.preventDefault();
+  try { await post("/api/open", {what: b.dataset.open}); } catch (e) { alert(e.message); }
+});
+document.addEventListener("click", async ev => {
+  const b = ev.target.closest("[data-copy]");
+  if (!b) return;
+  ev.preventDefault();
+  try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy", 1500); }
+  catch (e) { alert("Couldn't copy: " + e.message); }
+});
+
+// ------------------------------------------------------------------ views
+const VIEWS = {};
+
+VIEWS.map = async ({arg, q}) => {
+  if (!arg) return mapRoot();
+  const offset = +(q.get("offset") || 0);
+  const d = await api("/api/dir", {id: arg, limit: 300, offset});
+  const dir = d.dir;
+  const crumbs = [`<a href="#/map">This PC</a>`].concat(d.crumbs.map((c, i) =>
+    i === d.crumbs.length - 1 ? `<span>${esc(c.name)}</span>` : folderLink(c.id, c.name))).join(' <span>›</span> ');
+  const compared = d.compared;
+  const dsize = compared && dir.prev_tree_size !== null ? dir.tree_size - dir.prev_tree_size : null;
+  let html = `<div class="crumbs">${crumbs}</div><h1>${esc(dir.name)}</h1>
+    <div class="p sub small" style="font-family:Consolas,monospace">${esc(dir.path)}
+      <button class="small" data-reveal="${esc(dir.path)}" style="margin-left:8px">Show in Explorer</button></div>
+    <div class="stats">
+      <span class="chip">Size <b>${size(dir.tree_size)}</b></span>
+      <span class="chip"><b>${num(dir.tree_files)}</b> files</span>
+      <span class="chip"><b>${num(dir.tree_dirs)}</b> folders</span>
+      <span class="chip">Directly here: <b>${num(dir.files)}</b> files, <b>${size(dir.size)}</b></span>
+      ${compared ? (dir.prev_tree_size === null ? `<span class="chip">${badge("new")} since last scan</span>` :
+        `<span class="chip">Since last scan: <b>${delta(dsize) || "no size change"}</b>, ${delta(dir.tree_files - dir.prev_tree_files, signedNum) || "same file count"}</span>`) : ""}
+      <span class="chip">Modified ${when(dir.mtime)}</span>
+      ${d.tag ? `<span class="chip">${tagChip(d.tag.cat)}${d.tag.why ? ` <span class="small">· ${esc(d.tag.why)}${d.tag.from ? ` (${folderLink(d.tag.from.id, d.tag.from.name)})` : ""}</span>` : ""}</span>` : ""}
+    </div>`;
+  if (dir.kind === 2) html += `<div class="note err">This folder could not be read (${esc(dir.error)}). Run the scan as administrator to include it.</div>`;
+  if (dir.kind === 1) html += `<div class="note">This is a link to <b>${esc(dir.link_target || "another folder")}</b>; the scan records it but does not follow it.</div>`;
+  if (dir.kind === 0 && dir.error) html += `<div class="note err">${esc(dir.error)}</div>`;
+
+  if (d.children.length) {
+    const top = Math.max(1, ...d.children.map(c => c.tree_size || 0));
+    const rows = d.children.map(c => {
+      let nameHtml, extra = "";
+      if (c.kind === 1) { nameHtml = `${ICON.link}${esc(c.name)} <span class="dim small">→ ${esc(c.link_target || "link")}</span>`; }
+      else if (c.kind === 2) { nameHtml = `${ICON.lock}${folderLink(c.id, c.name)} <span class="dim small">${esc(c.error)}</span>`; }
+      else { nameHtml = `${ICON.folder}${folderLink(c.id, c.name)}`; }
+      if (compared && c.prev_tree_size === null && c.kind !== 1) extra = badge("new");
+      const dd = compared && c.prev_tree_size !== null ? c.tree_size - c.prev_tree_size : null;
+      return `<tr><td class="name">${nameHtml}${extra}</td><td class="hide-sm">${tagChip(c.cat)}</td>
+        <td class="barcell">${bar(c.tree_size / top)}</td><td class="n">${size(c.tree_size)}</td>
+        ${compared ? `<td class="n">${delta(dd)}</td>` : ""}
+        <td class="n">${num(c.tree_files)}</td><td class="n hide-sm">${num(c.tree_dirs)}</td>
+        <td class="n hide-sm">${when(c.mtime)}</td><td>${revealBtn(join(dir.path, c.name))}</td></tr>`;
+    });
+    html += `<h2>Folders <span class="sub">(${num(dir.subdirs)})</span></h2>` +
+      table(["Name", "~Category", "", "#Size", ...(compared ? ["#Since last scan"] : []), "#Files", "#Folders", "#Modified", ""], rows);
+  }
+  if (d.files.length || offset) {
+    const top = Math.max(1, ...d.files.map(f => f.size || 0));
+    const hl = q.get("file");
+    const rows = d.files.map(f => {
+      const tags = [];
+      if (f.change) tags.push(badge(f.change));
+      if (isCloud(f.attrs)) tags.push(badge("tag", "online-only"));
+      if (f.attrs & 4) tags.push(badge("tag", "system"));
+      else if (f.attrs & 2) tags.push(badge("tag", "hidden"));
+      return `<tr${hl && hl === f.name ? ' class="hl" id="hl"' : ""}><td class="name">${ICON.file}${esc(f.name)}${tags.join("")}</td>
+        <td class="barcell">${bar(f.size / top)}</td><td class="n">${size(f.size)}</td>
+        <td class="n">${when(f.mtime)}</td><td class="n hide-sm">${when(f.ctime)}</td><td>${revealBtn(join(dir.path, f.name))}</td></tr>`;
+    });
+    html += `<h2>Files <span class="sub">(${num(dir.files)}, largest first)</span></h2>` +
+      table(["Name", "", "#Size", "#Modified", "~Created", ""], rows);
+    if (dir.files > d.limit) {
+      const prev = offset > 0 ? `<a href="#/map/${dir.id}?offset=${Math.max(0, offset - d.limit)}">‹ Previous</a>` : "";
+      const next = offset + d.limit < dir.files ? `<a href="#/map/${dir.id}?offset=${offset + d.limit}">Next ›</a>` : "";
+      html += `<div class="pager">${prev}<span>Files ${num(offset + 1)}–${num(Math.min(dir.files, offset + d.limit))} of ${num(dir.files)}</span>${next}</div>`;
+    }
+  }
+  if (!d.children.length && !d.files.length && dir.kind === 0) html += `<div class="note">This folder is empty.</div>`;
+  if (d.removed_files.length || d.removed_dirs.length) {
+    const rows = d.removed_dirs.map(r => `<tr><td class="name">${ICON.folder}${esc(r.path.split("\\").pop())}${badge("removed")}</td>
+        <td class="n">${num(r.tree_files)} files</td><td class="n">${size(r.tree_size)}</td></tr>`)
+      .concat(d.removed_files.map(r => `<tr><td class="name">${ICON.file}${esc(r.name)}${badge("removed")}</td><td></td><td class="n">${size(r.size)}</td></tr>`));
+    html += `<details><summary>Removed from this folder since the last scan (${num(rows.length)})</summary>${table(["Name", "", "#Size"], rows)}</details>`;
+  }
+  view.innerHTML = html;
+  const h = document.getElementById("hl");
+  if (h) h.scrollIntoView({block: "center"});
+};
+
+function mapRoot() {
+  const ov = S.ov;
+  const m = ov.meta;
+  const compared = !!ov.changes.compared_to;
+  const os = JSON.parse(m.os || "{}");
+  const cards = ov.roots.map(r => {
+    const used = r.total ? r.used / r.total : 0;
+    const dd = compared && r.prev_tree_size !== null ? r.tree_size - r.prev_tree_size : null;
+    return `<a class="card" href="#/map/${r.id}"><div class="k">${ICON.drive}${esc(r.path)} ${esc(r.label || "")}</div>
+      <div class="v">${size(r.tree_size)}</div>
+      <div class="d">${num(r.tree_files)} files · ${num(r.tree_dirs)} folders ${dd ? "· " + delta(dd) : ""}</div>
+      ${r.total ? `<div style="margin-top:8px">${bar(used)}</div><div class="d">${size(r.used)} used of ${size(r.total)}, ${size(r.free)} free</div>` : ""}
+      </a>`;
+  }).join("");
+  view.innerHTML = `<h1>This PC</h1>
+    <div class="stats">
+      <span class="chip">Scanned <b>${whenIso(m.started)}</b></span>
+      <span class="chip">${esc(os.caption || "Windows")} ${esc(os.display || "")} build ${esc(os.build || "?")}.${esc(os.ubr || "")}</span>
+      <span class="chip"><b>${num(+m.total_files)}</b> files · <b>${num(+m.total_dirs)}</b> folders · <b>${size(+m.total_size)}</b></span>
+      <span class="chip">${m.elevated === "yes" ? "Scanned as administrator" : "Scanned as standard user"}${+m.unreadable_dirs ? ` · ${num(+m.unreadable_dirs)} unreadable folders` : ""}</span>
+      ${compared ? `<span class="chip">Compared with <b>${whenIso(ov.changes.compared_to_started)}</b> · <a href="#/changes">see changes</a></span>` : `<span class="chip">Baseline scan: no earlier scan to compare</span>`}
+    </div>
+    <div class="cards">${cards}${cleanupCard()}</div>
+    ${ov.classified && ov.by_cat.length ? `<h2>What's taking up space <span class="sub small"><a href="#/categories">by category ›</a></span></h2>${groupBar(ov.by_cat)}` : ""}
+    <div class="note">Click a drive to walk its folders. Sizes add up file sizes like Explorer does; online-only OneDrive files
+      count at full size and hard-linked system files count in every folder that holds them.</div>`;
+}
+
+function cleanupCard() {
+  const c = S.ov.cleanup || {};
+  if (!S.ov.classified) return "";
+  const n = Object.values(c).reduce((a, g) => a + g.n, 0);
+  const sz = Object.values(c).reduce((a, g) => a + g.size, 0);
+  const harm = (c.harmful || {}).n || 0;
+  return `<a class="card" href="#/cleanup"><div class="k">Cleanup suggestions</div><div class="v">${num(n)}</div>
+    <div class="d">${size(sz)} could be freed${harm ? ` · <span class="crit">${num(harm)} potentially harmful</span>` : ""}</div></a>`;
+}
+
+// ------------------------------------------------------------------ categories
+VIEWS.categories = async ({arg, q}) => {
+  if (arg) return categoryDetail(arg, q);
+  const d = await api("/api/categories");
+  if (!d.classified) { view.innerHTML = `<h1>Categories</h1><div class="note">This snapshot hasn't been classified yet.</div>`; return; }
+  const total = d.rows.reduce((a, r) => a + (r.size || 0), 0) || 1;
+  const top = Math.max(1, ...d.rows.map(r => r.size || 0));
+  const byCat = Object.fromEntries(d.rows.map(r => [r.cat, r]));
+  const rows = [];
+  for (const [g, glabel] of S.ov.groups) {
+    const cats = S.ov.tags.filter(t => t[2] === g && byCat[t[0]] && (byCat[t[0]].size || byCat[t[0]].items))
+      .sort((a, b) => (byCat[b[0]].size || 0) - (byCat[a[0]].size || 0));
+    if (!cats.length) continue;
+    rows.push(`<tr class="grp"><td colspan="6">${esc(glabel)}</td></tr>`);
+    for (const [id, , , desc] of cats) {
+      const r = byCat[id];
+      rows.push(`<tr><td>${tagChip(id)}<div class="why hide-sm">${esc(desc)}</div></td>
+        <td class="barcell">${bar((r.size || 0) / top)}</td><td class="n">${size(r.size || 0)}</td>
+        <td class="n">${((r.size || 0) / total * 100).toFixed(1)}%</td><td class="n hide-sm">${num(r.files || 0)}</td>
+        <td class="n">${r.items ? `<a href="#/categories/${id}">${num(r.items)}</a>` : ""}</td></tr>`);
+    }
+  }
+  view.innerHTML = `<h1>Categories</h1>
+    <p class="sub">Every folder, program, service, startup entry and task on this PC is tagged with what it is.
+      Sizes count each folder's own files once, so the categories add up to the whole scan.</p>
+    ${groupBar(d.rows)}` + table(["Category", "", "#Size", "#Share", "~Files", "#Programs & items"], rows) +
+    `<p class="sub small">Tags come from names, publishers and locations. If one is wrong, set your own in
+      <code>config.json</code> under <code>category_overrides</code>.</p>`;
+};
+
+async function categoryDetail(cat, q) {
+  const d = await api("/api/category", {cat});
+  const t = S.tagMap[cat] || {label: cat, desc: ""};
+  const labels = Object.fromEntries(d.categories);
+  const top = Math.max(1, ...d.dirs.map(r => r.cat_size || 0));
+  const drows = d.dirs.map(r => `<tr><td><a class="p" style="word-break:break-all" href="#/map/${r.id}">${esc(r.path)}</a>
+      ${r.why ? `<div class="why">${esc(r.why)}</div>` : ""}</td>
+    <td class="barcell">${bar((r.cat_size || 0) / top)}</td><td class="n">${size(r.cat_size)}</td>
+    <td class="n hide-sm">${num(r.tree_files)}</td><td class="n hide-sm">${r.newest ? when(r.newest) : "-"}</td>
+    <td>${revealBtn(r.path)}</td></tr>`);
+  const showSys = q.get("all") === "1";
+  const items = d.items.filter(r => showSys || !r.hidden);
+  const irows = items.map(r => `<tr><td>${esc(labels[r.category] || r.category)}</td><td>${esc(r.name)}${r.hidden ? badge("tag", "system") : ""}
+      <div class="why">${esc(r.why || "")}</div></td><td>${esc(r.version || "")}</td><td class="p">${esc(r.location || "")}</td></tr>`);
+  const hiddenN = d.items.length - d.items.filter(r => !r.hidden).length;
+  view.innerHTML = `<div class="crumbs"><a href="#/categories">Categories</a> <span>›</span> <span>${esc(t.label)}</span></div>
+    <h1>${esc(t.label)}</h1><p class="sub">${esc(t.desc)}</p>
+    <h2>Folders <span class="sub">(${num(d.total_dirs)}${d.total_dirs > d.dirs.length ? `, largest ${num(d.dirs.length)} shown` : ""})</span></h2>
+    <p class="sub small">Each row is the top folder of a tree tagged “${esc(t.label)}”. Size counts only the parts with that tag
+      (a browser's cache inside its folder is counted under Cache &amp; temp instead).</p>` +
+    table(["Folder", "", "#Size", "~Files", "~Newest file", ""], drows, "No folders in this category.") +
+    `<h2>Programs &amp; system items <span class="sub">(${num(items.length)})</span></h2>
+    ${hiddenN ? `<div class="filters"><label><input type="checkbox" id="c-all" ${showSys ? "checked" : ""}> include ${num(hiddenN)} system-level items</label></div>` : ""}` +
+    table(["Kind", "Name", "Version", "Location / command"], irows, "No programs in this category.");
+  const cb = document.getElementById("c-all");
+  if (cb) cb.onchange = e => setHash("categories", cat, {all: e.target.checked ? 1 : ""});
+}
+
+// ------------------------------------------------------------------ cleanup
+const WARN_ICON = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 1.8 15 14H1z"/><path d="M8 6.2v3.6M8 11.6v.4"/></svg>';
+const CONF_TIP = {high: "High confidence: clearly safe to remove", medium: "Medium confidence: very likely unneeded",
+                  low: "Low confidence: worth a look, check before removing"};
+const OPEN_LABEL = {apps: "Open Apps", startup: "Open Startup apps", storage: "Open Storage", tasks: "Open Task Scheduler",
+                    services: "Open Services", recycle: "Open Recycle Bin"};
+VIEWS.cleanup = async ({q}) => {
+  const d = await api("/api/cleanup");
+  if (!d.classified) { view.innerHTML = `<h1>Cleanup suggestions</h1><div class="note">This snapshot hasn't been classified yet.</div>`; return; }
+  const grp = q.get("g") || "";
+  const conf = q.get("conf") || "all";
+  const showKept = q.get("kept") === "1";
+  const confOk = r => conf === "all" || (conf === "hm" ? r.confidence !== "low" : r.confidence === "high");
+  const live = d.rows.filter(r => !r.kept);
+  const cards = d.groups.map(([g, label]) => {
+    const rs = live.filter(r => r.grp === g);
+    const sz = rs.reduce((a, r) => a + (r.size || 0), 0);
+    return `<a class="card" href="#/cleanup?g=${g}" style="${grp === g ? "border-color:var(--accent)" : ""}">
+      <div class="k">${g === "harmful" && rs.length ? `<span class="crit">${WARN_ICON}${esc(label)}</span>` : esc(label)}</div>
+      <div class="v">${num(rs.length)}</div><div class="d">${sz ? size(sz) + " could be freed" : rs.length ? "&nbsp;" : "nothing found"}</div></a>`;
+  }).join("");
+  const keptN = d.rows.length - live.length;
+  let html = `<h1>Cleanup suggestions</h1>
+    <p class="sub">Things on this PC that look unnecessary, like bloat, or potentially harmful. Nothing is deleted for you:
+      each suggestion says why it was picked, how sure it is, and how to remove it yourself.</p>
+    <div class="cards">${cards}</div>
+    <div class="filters">
+      <div class="pills" style="margin:0">${[["", "All"], ...d.groups.map(g => [g[0], g[1]])].map(([g, l]) =>
+        `<a class="${grp === g ? "on" : ""}" href="#/cleanup?${new URLSearchParams({...(g ? {g} : {}), ...(conf !== "all" ? {conf} : {}), ...(showKept ? {kept: 1} : {})})}">${esc(l)}</a>`).join("")}</div>
+      <select id="k-conf" aria-label="Confidence">
+        <option value="all" ${conf === "all" ? "selected" : ""}>Any confidence</option>
+        <option value="hm" ${conf === "hm" ? "selected" : ""}>High &amp; medium only</option>
+        <option value="high" ${conf === "high" ? "selected" : ""}>High only</option></select>
+      ${keptN ? `<label><input type="checkbox" id="k-kept" ${showKept ? "checked" : ""}> show ${num(keptN)} you chose to keep</label>` : ""}
+    </div>`;
+  for (const [g, label, desc] of d.groups) {
+    if (grp && grp !== g) continue;
+    const rs = d.rows.filter(r => r.grp === g && (showKept || !r.kept) && confOk(r));
+    const sz = rs.filter(r => !r.kept).reduce((a, r) => a + (r.size || 0), 0);
+    html += `<h2>${g === "harmful" && rs.length ? `<span class="crit">${WARN_ICON}${esc(label)}</span>` : esc(label)}
+      <span class="sub">(${num(rs.length)}${sz ? ", " + size(sz) : ""})</span></h2><p class="sub small">${esc(desc)}</p>`;
+    if (!rs.length) {
+      html += `<div class="box"><div class="empty">${g === "harmful" ? "Nothing suspicious found. Checked: known unwanted software, startup entries, tasks and services that run from unusual places or with hidden commands, and program files disguised as documents." : "Nothing here."}</div></div>`;
+      continue;
+    }
+    html += table(["Confidence", "Suggestion", "#Size", ""], rs.map(cleanupRow), "Nothing here.");
+  }
+  html += `<p class="sub small" style="margin-top:22px">Suggestions are worked out from names, locations, dates and sizes in this scan${d.classified_at ? ` (checked ${whenIso(d.classified_at)})` : ""};
+    file contents aren't read. This isn't an antivirus: for anything that looks harmful, run a full Microsoft Defender scan.
+    “Keep” hides a suggestion in future scans too.</p>`;
+  view.innerHTML = html;
+  const go = over => setHash("cleanup", "", {g: grp, conf, kept: showKept ? 1 : "", ...over});
+  document.getElementById("k-conf").onchange = e => go({conf: e.target.value === "all" ? "" : e.target.value});
+  const kk = document.getElementById("k-kept");
+  if (kk) kk.onchange = e => go({kept: e.target.checked ? 1 : ""});
+  view.querySelectorAll("[data-keep]").forEach(b => b.onclick = async () => {
+    try { await post("/api/keep", {key: b.dataset.keep, keep: b.dataset.state !== "1", title: b.dataset.title});
+          S.ov = await api("/api/overview", {snap: S.snap}); route(); }
+    catch (e) { alert(e.message); }
+  });
+};
+function cleanupRow(r) {
+  const where = r.target && (r.target_type === "folder" || r.target_type === "file")
+    ? `<div class="p small" style="margin-top:4px">${r.dir_id ? `<a href="#/map/${r.dir_id}${r.target_type === "file" ? "?file=" + encodeURIComponent(r.target.split("\\").pop()) : ""}">${esc(r.target)}</a>` : esc(r.target)}</div>`
+    : (r.target && ["startup", "task", "service"].includes(r.target_type) ? `<div class="p small dim" style="margin-top:4px">${esc(r.target)}</div>` : "");
+  const extra = r.extra && r.extra.paths ? `<details style="margin:4px 0 0"><summary class="small">All ${num(r.extra.paths.length)} copies</summary>
+      ${r.extra.paths.map(p => `<div class="p small">${esc(p)}</div>`).join("")}</details>` : "";
+  const cmd = r.command ? `<div class="cmd"><code>${esc(r.command)}</code><button class="small" data-copy="${esc(r.command)}">Copy</button></div>` : "";
+  const btns = [];
+  if (r.target && (r.target_type === "folder" || r.target_type === "file")) btns.push(`<button data-reveal="${esc(r.target)}">Explorer</button>`);
+  if (r.settings && OPEN_LABEL[r.settings]) btns.push(`<button data-open="${esc(r.settings)}">${esc(OPEN_LABEL[r.settings])}</button>`);
+  btns.push(`<button data-keep="${esc(r.key)}" data-state="${r.kept ? 1 : 0}" data-title="${esc(r.title)}"
+      data-tip="${r.kept ? "Show this suggestion again" : "Hide this suggestion, now and in future scans"}">${r.kept ? "Undo keep" : "Keep"}</button>`);
+  return `<tr class="sug${r.kept ? " kept" : ""}"><td><span data-tip="${esc(CONF_TIP[r.confidence] || "")}">${badge(r.confidence)}</span></td>
+    <td><b>${esc(r.title)}</b> ${r.cat ? tagChip(r.cat) : ""}<div class="why">${esc(r.reason)}</div>
+      <div class="why"><b>How:</b> ${esc(r.action)}</div>${cmd}${where}${extra}</td>
+    <td class="n">${r.size ? size(r.size) : ""}${r.count && r.target_type === "folder" ? `<div class="why">${num(r.count)} files</div>` : ""}</td>
+    <td><div class="btns">${btns.join("")}</div></td></tr>`;
+}
+
+VIEWS.changes = async ({arg, q}) => {
+  const ov = S.ov;
+  if (!ov.changes.compared_to) {
+    view.innerHTML = `<h1>Changes</h1><div class="note">This snapshot is a baseline: there was no earlier scan to compare it with.
+      Run the scan again later (for example next week) and every added, removed and modified file, folder and program will show up here.</div>`;
+    return;
+  }
+  const sub = arg || "overview";
+  const pills = [["overview", "Overview"], ["programs", "Programs & system"], ["files", "Files"], ["folders", "Folders"], ["space", "Disk space"]]
+    .map(([k, l]) => `<a class="${k === sub ? "on" : ""}" href="#/changes/${k}">${l}</a>`).join("");
+  const head = `<h1>Changes</h1><div class="sub">${whenIso(ov.meta.started)} compared with ${whenIso(ov.changes.compared_to_started)}</div><div class="pills">${pills}</div>`;
+  const c = ov.counts;
+  if (sub === "overview") {
+    const n = k => c[k] || 0;
+    const card = (href, k, v, d) => `<a class="card" href="${href}"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></a>`;
+    const sz = +ov.meta.total_size - +(ov.changes.compared_to_total_size || 0);
+    view.innerHTML = head + `<div class="cards">
+      ${card("#/changes/programs", "Programs & system", num(n("inv_added") + n("inv_removed") + n("inv_updated") + n("inv_changed")),
+        `${n("inv_added")} added · ${n("inv_removed")} removed · ${n("inv_updated")} updated · ${n("inv_changed")} changed`)}
+      ${card("#/changes/files?exe=1", "Programs & scripts on disk", num(n("exe_changed")), "new or changed executables outside routine areas")}
+      ${card("#/changes/files?change=added", "Files added", num(n("files_added_normal")), `plus ${num(n("files_added_routine"))} routine`)}
+      ${card("#/changes/files?change=modified", "Files modified", num(n("files_modified_normal")), `plus ${num(n("files_modified_routine"))} routine`)}
+      ${card("#/changes/files?change=removed", "Files removed", num(n("files_removed_normal")), `plus ${num(n("files_removed_routine"))} routine`)}
+      ${card("#/changes/folders?change=added", "New folder trees", num(n("dirs_added_normal")), `plus ${num(n("dirs_added_routine"))} routine`)}
+      ${card("#/changes/folders?change=removed", "Removed folder trees", num(n("dirs_removed_normal")), `plus ${num(n("dirs_removed_routine"))} routine`)}
+      ${card("#/changes/space", "Total size", delta(sz) || "no change", "across all scanned drives")}
+    </div>
+    <div class="note">“Routine” means caches, temp files, logs, browser profiles and update stores. They are hidden by default;
+      tick “include routine” in the Files and Folders views to see them. The list of routine patterns lives in <code>config.json</code>.</div>`;
+    return;
+  }
+  if (sub === "programs") {
+    const showAll = q.get("all") === "1";
+    const d = await api("/api/inv_changes");
+    const labels = Object.fromEntries(d.categories);
+    const rows = d.rows.filter(r => showAll || !r.hidden).map(r => {
+      let ver = "";
+      if (r.old_version && r.new_version && r.old_version !== r.new_version) ver = `${esc(r.old_version)} → ${esc(r.new_version)}`;
+      else ver = esc(r.new_version || r.old_version || "");
+      let loc = esc(r.change === "removed" ? r.old_location : r.new_location);
+      if (r.change === "changed" && r.old_location !== r.new_location) loc = `<span class="dim">was</span> ${esc(r.old_location)}<br><span class="dim">now</span> ${esc(r.new_location)}`;
+      else if (r.change === "changed") loc += ` <span class="dim">(start type, account or enabled state changed)</span>`;
+      return `<tr><td>${esc(labels[r.category] || r.category)}</td><td>${badge(r.change)}</td><td>${esc(r.name)}${r.hidden ? badge("tag", "system") : ""}</td>
+        <td class="hide-sm">${tagChip(r.cat)}</td><td>${ver}</td><td class="p">${loc}</td></tr>`;
+    });
+    const hiddenCount = d.rows.filter(r => r.hidden).length;
+    view.innerHTML = head + `<div class="filters"><label><input type="checkbox" id="all" ${showAll ? "checked" : ""}> include ${num(hiddenCount)} system-level items (Windows services, drivers, Microsoft tasks, frameworks)</label></div>` +
+      table(["Kind", "Change", "Name", "~Category", "Version", "Location / command"], rows, "No changes to programs or system components.");
+    document.getElementById("all").onchange = e => setHash("changes", "programs", {all: e.target.checked ? 1 : ""});
+    return;
+  }
+  if (sub === "files") {
+    const p = {change: q.get("change") || "all", routine: q.get("routine") || "0", exe: q.get("exe") || "", q: q.get("q") || "",
+               sort: q.get("sort") || "size", offset: +(q.get("offset") || 0), limit: 200};
+    const d = await api("/api/changes", p);
+    const rows = d.rows.map(r => {
+      let sz = r.change === "modified" ? `${size(r.old_size)} → ${size(r.new_size)}` : size(r.change === "removed" ? r.old_size : r.new_size);
+      const t = r.change === "removed" ? r.old_mtime : r.new_mtime;
+      return `<tr><td>${badge(r.change)}${r.routine ? badge("tag", "routine") : ""}</td>
+        <td class="p"><a class="dim" href="#/map/${r.dir_id}?file=${encodeURIComponent(r.name)}">${esc(r.dir_path.endsWith("\\") ? r.dir_path : r.dir_path + "\\")}</a>${esc(r.name)}</td>
+        <td class="n">${sz}</td><td class="n">${when(t)}</td></tr>`;
+    });
+    const sel = (id, opts, val) => `<select id="${id}">${opts.map(([v, l]) => `<option value="${v}" ${v === val ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+    view.innerHTML = head + `<div class="filters">
+        ${sel("f-change", [["all", "All changes"], ["added", "Added"], ["modified", "Modified"], ["removed", "Removed"]], p.change)}
+        ${sel("f-sort", [["size", "Largest first"], ["time", "Newest first"], ["path", "By path"]], p.sort)}
+        <label><input type="checkbox" id="f-exe" ${p.exe === "1" ? "checked" : ""}> programs &amp; scripts only</label>
+        <label><input type="checkbox" id="f-routine" ${p.routine === "all" ? "checked" : ""}> include routine</label>
+        <input type="text" id="f-q" placeholder="Filter by path or name" value="${esc(p.q)}">
+      </div>` + table(["Change", "File", "#Size", "#Modified"], rows, "No matching changes.") +
+      pager(d.total, p.offset, p.limit, o => ({...p, offset: o, limit: undefined}));
+    const go = () => setHash("changes", "files", {
+      change: document.getElementById("f-change").value, sort: document.getElementById("f-sort").value,
+      exe: document.getElementById("f-exe").checked ? "1" : "", routine: document.getElementById("f-routine").checked ? "all" : "",
+      q: document.getElementById("f-q").value.trim()});
+    ["f-change", "f-sort", "f-exe", "f-routine"].forEach(id => document.getElementById(id).onchange = go);
+    document.getElementById("f-q").onkeydown = e => { if (e.key === "Enter") go(); };
+    bindPager("changes", "files");
+    return;
+  }
+  if (sub === "folders") {
+    const p = {change: q.get("change") || "added", routine: q.get("routine") || "0", q: q.get("q") || "", offset: +(q.get("offset") || 0), limit: 200};
+    const d = await api("/api/changed_dirs", p);
+    const rows = d.rows.map(r => `<tr><td>${badge(r.change)}${r.routine ? badge("tag", "routine") : ""}</td>
+      <td class="p">${r.dir_id ? `<a href="#/map/${r.dir_id}">${esc(r.path)}</a>` : esc(r.path)}</td>
+      <td class="n">${num(r.tree_files)}</td><td class="n">${num(r.tree_dirs)}</td><td class="n">${r.exe_count ? num(r.exe_count) : ""}</td>
+      <td class="n">${size(r.tree_size)}</td></tr>`);
+    view.innerHTML = head + `<div class="filters">
+        <select id="d-change"><option value="added" ${p.change === "added" ? "selected" : ""}>New folders</option><option value="removed" ${p.change === "removed" ? "selected" : ""}>Removed folders</option></select>
+        <label><input type="checkbox" id="d-routine" ${p.routine === "all" ? "checked" : ""}> include routine</label>
+        <input type="text" id="d-q" placeholder="Filter by path" value="${esc(p.q)}">
+      </div><p class="sub small">Only the topmost folder of each new or removed tree is listed; counts include everything inside it.</p>` +
+      table(["Change", "Folder", "#Files", "#Subfolders", "#Programs", "#Size"], rows, "None.") +
+      pager(d.total, p.offset, p.limit, o => ({...p, offset: o, limit: undefined}));
+    const go = () => setHash("changes", "folders", {change: document.getElementById("d-change").value,
+      routine: document.getElementById("d-routine").checked ? "all" : "", q: document.getElementById("d-q").value.trim()});
+    ["d-change", "d-routine"].forEach(id => document.getElementById(id).onchange = go);
+    document.getElementById("d-q").onkeydown = e => { if (e.key === "Enter") go(); };
+    bindPager("changes", "folders");
+    return;
+  }
+  if (sub === "space") {
+    const mb = q.get("mb") || "100";
+    const d = await api("/api/space", {mb});
+    const top = Math.max(1, ...d.rows.map(r => Math.abs(r.new_size - r.old_size)));
+    const rows = d.rows.map(r => `<tr><td class="p"><a href="#/map/${r.id}">${esc(r.path)}</a></td>
+      <td class="n">${size(r.old_size)}</td><td class="n">${size(r.new_size)}</td><td class="n">${delta(r.new_size - r.old_size)}</td>
+      <td class="n">${signedNum(r.dfiles || 0)}</td><td class="barcell">${bar(Math.abs(r.new_size - r.old_size) / top, r.new_size < r.old_size)}</td></tr>`);
+    view.innerHTML = head + `<div class="filters"><label>Show folders that changed by at least
+      <select id="s-mb">${["10", "50", "100", "250", "1000"].map(v => `<option ${v === mb ? "selected" : ""}>${v}</option>`).join("")}</select> MB</label></div>
+      <p class="sub small">Each row is the most specific folder that explains the change, so nested parents are not repeated.</p>` +
+      table(["Folder", "#Before", "#Now", "#Change", "#Files", ""], rows, "No folder changed by that much.");
+    document.getElementById("s-mb").onchange = e => setHash("changes", "space", {mb: e.target.value});
+  }
+};
+
+function pager(total, offset, limit) {
+  if (total <= limit) return `<div class="pager">${num(total)} result${total === 1 ? "" : "s"}</div>`;
+  return `<div class="pager">${offset > 0 ? `<a href="#" data-off="${Math.max(0, offset - limit)}">‹ Previous</a>` : ""}
+    <span>${num(offset + 1)}–${num(Math.min(total, offset + limit))} of ${num(total)}</span>
+    ${offset + limit < total ? `<a href="#" data-off="${offset + limit}">Next ›</a>` : ""}</div>`;
+}
+function bindPager(tab, sub) {
+  view.querySelectorAll("[data-off]").forEach(a => a.onclick = ev => {
+    ev.preventDefault();
+    const q = new URLSearchParams(location.hash.split("?")[1] || "");
+    q.set("offset", a.dataset.off);
+    setHash(tab, sub, Object.fromEntries(q));
+  });
+}
+
+VIEWS.programs = async ({arg, q}) => {
+  const cat = arg || "program";
+  // every driver counts as a system item, so the drivers list always shows them all
+  const all = q.get("all") === "1" || cat === "driver";
+  const tagWant = q.get("tag") || "";
+  const d = await api("/api/inventory", {cat, hidden: all ? 1 : 0, tag: tagWant});
+  const filter = (q.get("q") || "").toLowerCase();
+  const tc = cat === "update" ? "" : (r => `<td class="hide-sm">${tagChip(r.cat)}</td>`);
+  const pills = (d.categories || []).map(([k, l]) => {
+    const c = d.counts[k] || {visible: 0, hidden: 0};
+    const showAll = q.get("all") === "1" || k === "driver";
+    const label = showAll ? num(c.visible + c.hidden) : num(c.visible) + (c.hidden ? ` <span class="small">+${num(c.hidden)} system</span>` : "");
+    return `<a class="${k === cat ? "on" : ""}" href="#/programs/${k}${q.get("all") === "1" ? "?all=1" : ""}">${esc(l)} <span class="dim">${label}</span></a>`;
+  }).join("");
+  const rows = d.rows.filter(r => !filter || JSON.stringify(r).toLowerCase().includes(filter));
+  const cn = p => { const m = /CN=([^,]+)/.exec(p || ""); return m ? m[1].replace(/"/g, "") : (p || ""); };
+  const sys = r => r.hidden ? badge("tag", "system") : "";
+  let headers, body;
+  if (cat === "program") {
+    headers = ["Name", "~Category", "Version", "Publisher", "~Installed", "#Size", "Location"];
+    body = rows.map(r => { const dt = r.details.install_date || ""; return `<tr><td>${esc(r.name)}${sys(r)}</td>${tc(r)}<td>${esc(r.version)}</td><td>${esc(r.publisher)}</td>
+      <td class="hide-sm" style="white-space:nowrap">${esc(dt.length === 8 ? dt.slice(0, 4) + "-" + dt.slice(4, 6) + "-" + dt.slice(6) : dt)}</td>
+      <td class="n">${r.details.size_bytes ? size(r.details.size_bytes) : ""}</td><td class="p">${loc(r.location)}</td></tr>`; });
+  } else if (cat === "store_app") {
+    headers = ["Name", "~Category", "Version", "Publisher", "Location"];
+    body = rows.map(r => `<tr><td>${esc(r.name)}${sys(r)}${r.details.framework ? badge("tag", "framework") : ""}</td>${tc(r)}<td>${esc(r.version)}</td><td>${esc(cn(r.publisher))}</td><td class="p">${loc(r.location)}</td></tr>`);
+  } else if (cat === "startup") {
+    headers = ["Name", "~Category", "State", "Where", "Command"];
+    body = rows.map(r => `<tr><td>${esc(r.name)}</td>${tc(r)}<td>${r.details.enabled === false ? '<span class="dim">disabled</span>' : "enabled"}</td><td>${esc(r.details.where)}</td><td class="p">${esc(r.location)}</td></tr>`);
+  } else if (cat === "service" || cat === "driver") {
+    headers = ["Name", "~Category", "Start", "State", "~Account", "Program"];
+    body = rows.map(r => `<tr><td>${esc(r.name)}${sys(r)}<div class="dim small">${esc(r.key)}</div></td>${tc(r)}<td>${esc(r.details.start)}</td><td>${esc(r.details.state)}</td>
+      <td class="hide-sm">${esc(r.details.account || "")}</td><td class="p">${esc(r.location)}</td></tr>`);
+  } else if (cat === "task") {
+    headers = ["Name", "~Category", "Folder", "State", "~Triggers", "Action"];
+    body = rows.map(r => `<tr><td>${esc(r.name)}${sys(r)}</td>${tc(r)}<td>${esc(r.details.folder)}</td><td>${esc(r.details.state)}</td>
+      <td class="hide-sm">${esc(r.details.triggers || "")}</td><td class="p">${esc(r.location)}</td></tr>`);
+  } else {
+    headers = ["Update", "Type", "Installed"];
+    body = rows.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.details.description)}</td><td>${esc(r.details.installed)}</td></tr>`);
+  }
+  const tagOpts = Object.entries(d.tag_counts || {}).filter(([k]) => k && k !== "null")
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, n]) => `<option value="${esc(k)}" ${k === tagWant ? "selected" : ""}>${esc((S.tagMap[k] || {label: k}).label)} (${num(n)})</option>`).join("");
+  view.innerHTML = `<h1>Programs &amp; system</h1><div class="pills">${pills}</div>
+    <div class="filters"><label><input type="checkbox" id="p-all" ${all ? "checked" : ""}> include system items</label>
+      ${cat !== "update" && tagOpts ? `<select id="p-tag" aria-label="Category"><option value="">All categories</option>${tagOpts}</select>` : ""}
+      <input type="text" id="p-q" placeholder="Filter" value="${esc(q.get("q") || "")}"><span class="sub">${num(rows.length)} shown</span></div>` +
+    table(headers, body, "Nothing in this category.");
+  const keep = over => setHash("programs", cat, {all: all && cat !== "driver" ? 1 : "", tag: tagWant, q: q.get("q") || "", ...over});
+  document.getElementById("p-all").onchange = e => keep({all: e.target.checked ? 1 : ""});
+  const pt = document.getElementById("p-tag");
+  if (pt) pt.onchange = e => keep({tag: e.target.value});
+  document.getElementById("p-q").onkeydown = e => { if (e.key === "Enter") keep({q: e.target.value.trim()}); };
+};
+function loc(p) {
+  if (!p) return "";
+  return `${esc(p)} <a href="#" class="small" data-open-path="${esc(p)}">map</a>`;
+}
+document.addEventListener("click", async ev => {
+  const a = ev.target.closest("[data-open-path]");
+  if (!a) return;
+  ev.preventDefault();
+  try { const d = await api("/api/dir", {path: a.dataset.openPath.replace(/\\+$/, "").replace(/^"|"$/g, ""), limit: 1}); location.hash = "#/map/" + d.dir.id; }
+  catch (e) { alert(e.message); }
+});
+
+VIEWS.big = async ({q}) => {
+  const ext = q.get("ext") || "";
+  const d = await api("/api/largest", {ext, limit: 500});
+  const top = Math.max(1, ...d.rows.map(r => r.size || 0));
+  const rows = d.rows.map(r => `<tr><td class="p"><a class="dim" href="#/map/${r.dir}?file=${encodeURIComponent(r.name)}">${esc(r.dir_path.endsWith("\\") ? r.dir_path : r.dir_path + "\\")}</a>${esc(r.name)}</td>
+    <td class="barcell">${bar(r.size / top)}</td><td class="n">${size(r.size)}</td><td class="n hide-sm">${when(r.mtime)}</td><td>${revealBtn(join(r.dir_path, r.name))}</td></tr>`);
+  view.innerHTML = `<h1>Largest files</h1><div class="filters"><label>File type <input type="text" id="b-ext" placeholder="e.g. mp4, iso, zip" value="${esc(ext)}"></label>
+    ${ext ? `<a href="#/big">clear</a>` : ""}<span class="sub">Top ${num(d.rows.length)}${ext ? " ." + esc(ext) + " files" : ""}</span></div>` +
+    table(["File", "", "#Size", "~Modified", ""], rows);
+  document.getElementById("b-ext").onkeydown = e => { if (e.key === "Enter") setHash("big", "", {ext: e.target.value.trim().replace(/^\./, "")}); };
+};
+
+VIEWS.types = async () => {
+  const d = await api("/api/types");
+  const total = d.rows.reduce((a, r) => a + (r.size || 0), 0) || 1;
+  const top = Math.max(1, ...d.rows.map(r => r.size || 0));
+  const rows = d.rows.map(r => `<tr><td><a href="#/big?ext=${encodeURIComponent(r.ext || "(none)")}">${esc(r.ext ? "." + r.ext : "(no extension)")}</a></td>
+    <td class="n">${num(r.files)}</td><td class="barcell">${bar(r.size / top)}</td><td class="n">${size(r.size)}</td><td class="n">${((r.size || 0) / total * 100).toFixed(1)}%</td></tr>`);
+  view.innerHTML = `<h1>File types</h1><p class="sub">Click a type to see its largest files.</p>` + table(["Type", "#Files", "", "#Size", "#Share"], rows);
+};
+
+VIEWS.reports = async () => {
+  const d = await api("/api/reports", {snap: ""});
+  const rows = d.rows.map(r => `<tr><td><a href="/reports/${encodeURIComponent(r.name)}" target="_blank" rel="noopener">${esc(r.name)}</a></td>
+    <td class="n">${when(r.mtime)}</td><td class="n">${size(r.bytes)}</td></tr>`);
+  const snaps = S.snaps.map(s => `<tr><td>${esc(s.name)}</td><td class="n">${whenIso(s.started)}</td><td class="n">${num(s.files)}</td>
+    <td class="n">${size(s.size)}</td><td class="n">${size(s.db_bytes)}</td><td>${esc(s.compared_to || "baseline")}</td></tr>`);
+  view.innerHTML = `<h1>Reports &amp; snapshots</h1><h2>Reports</h2>` + table(["Report", "#Created", "#Size"], rows, "No reports yet.") +
+    `<h2>Snapshots</h2>` + table(["Snapshot", "#Scanned", "#Files", "#Total size", "#Database", "Compared with"], snaps) +
+    `<p class="sub small">Snapshots live in <code>data\\snapshots</code>. Delete old ones to free space; each report keeps its own summary.</p>`;
+};
+
+VIEWS.search = async ({arg}) => {
+  const text = arg || "";
+  document.getElementById("search").value = text;
+  const d = await api("/api/search", {q: text});
+  const drows = d.dirs.map(r => `<tr><td class="p">${ICON.folder}<a href="#/map/${r.id}">${esc(r.path)}</a></td><td class="n">${num(r.tree_files)}</td><td class="n">${size(r.tree_size)}</td></tr>`);
+  const frows = d.files.map(r => `<tr><td class="p"><a class="dim" href="#/map/${r.dir}?file=${encodeURIComponent(r.name)}">${esc(r.dir_path.endsWith("\\") ? r.dir_path : r.dir_path + "\\")}</a>${esc(r.name)}</td>
+    <td class="n">${size(r.size)}</td><td class="n hide-sm">${when(r.mtime)}</td><td>${revealBtn(join(r.dir_path, r.name))}</td></tr>`);
+  view.innerHTML = `<h1>Search: ${esc(text)}</h1><p class="sub">Names containing “${esc(text)}”, largest first.</p>
+    <h2>Folders <span class="sub">(${num(d.dirs.length)}${d.dirs.length >= 200 ? "+" : ""})</span></h2>${table(["Folder", "#Files", "#Size"], drows, "No folders match.")}
+    <h2>Files <span class="sub">(${num(d.files.length)}${d.files.length >= 500 ? "+" : ""})</span></h2>${table(["File", "#Size", "~Modified", ""], frows, "No files match.")}`;
+};
+
+// ------------------------------------------------------------------ router
+function parseHash() {
+  const h = location.hash.replace(/^#\/?/, "") || "map";
+  const [pathPart, query = ""] = h.split("?");
+  const parts = pathPart.split("/");
+  return {tab: parts[0] || "map", arg: decodeURIComponent(parts.slice(1).join("/")), q: new URLSearchParams(query)};
+}
+let routeSeq = 0;
+async function route() {
+  const r = parseHash();
+  const seq = ++routeSeq;
+  document.querySelectorAll("#tabs a").forEach(a => a.classList.toggle("on", a.dataset.tab === r.tab));
+  const fn = VIEWS[r.tab] || VIEWS.map;
+  view.innerHTML = `<div class="empty">Loading…</div>`;
+  try { await fn(r); if (seq === routeSeq) window.scrollTo(0, 0); }
+  catch (e) { if (seq === routeSeq) view.innerHTML = `<div class="note err">${esc(e.message)}</div>`; }
+}
+async function loadSnapshot(name) {
+  S.snap = name;
+  S.ov = await api("/api/overview", {snap: name});
+  S.tagMap = Object.fromEntries((S.ov.tags || []).map(([id, label, group, desc]) => [id, {label, group, desc}]));
+  document.getElementById("computer").textContent = S.ov.meta.computer || "";
+}
+async function init() {
+  try {
+    S.snaps = await api("/api/snapshots", {snap: ""});
+  } catch (e) { view.innerHTML = `<div class="note err">${esc(e.message)}</div>`; return; }
+  if (!S.snaps.length) { view.innerHTML = `<div class="note">No snapshots yet. Run <code>Scan-Computer.ps1</code> first.</div>`; return; }
+  const sel = document.getElementById("snap");
+  sel.innerHTML = S.snaps.map((s, i) => `<option value="${esc(s.name)}">${esc(whenIso(s.started))}${i === 0 ? " (latest)" : ""}</option>`).join("");
+  sel.onchange = async () => { await loadSnapshot(sel.value); location.hash = "#/map"; route(); };
+  await loadSnapshot(S.snaps[0].name);
+  document.getElementById("search").onkeydown = e => {
+    if (e.key === "Enter" && e.target.value.trim().length >= 2) setHash("search", e.target.value.trim());
+  };
+  window.addEventListener("hashchange", route);
+  route();
+}
+init();
+</script>
+</body>
+</html>

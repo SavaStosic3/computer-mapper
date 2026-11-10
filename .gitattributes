@@ -1,0 +1,8 @@
+* text=auto
+# Windows scripts keep Windows line endings so cmd.exe and PowerShell parse them reliably.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.py text eol=lf
+*.html text eol=lf
+*.md text eol=lf
